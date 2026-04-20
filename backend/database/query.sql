@@ -116,3 +116,17 @@ CREATE TABLE IF NOT EXISTS guests (
     INDEX idx_company (company),
     INDEX idx_qr_code (qr_code)
 );
+
+CREATE TABLE IF NOT EXISTS guest_checkins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    guest_id INT NOT NULL,
+    qr_code VARCHAR(100) NOT NULL,
+    checked_in_at DATETIME NOT NULL,
+    scan_source VARCHAR(50) DEFAULT 'camera',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_guest_checkin (guest_id),
+    INDEX idx_guest_id (guest_id),
+    INDEX idx_qr_code (qr_code),
+    INDEX idx_checked_in_at (checked_in_at),
+    FOREIGN KEY (guest_id) REFERENCES guests(id) ON DELETE CASCADE
+);

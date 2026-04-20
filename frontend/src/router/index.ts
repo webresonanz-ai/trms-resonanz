@@ -7,6 +7,7 @@ import Settings from "../views/Settings.vue";
 import Login from "../views/Login.vue";
 import Register from "../views/Register.vue";
 import GuestRegistration from "../views/GuestRegistration.vue";
+import GuestCheckIn from "../views/GuestCheckIn.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: "/guest-registration",
       name: "guest-registration",
       component: GuestRegistration,
+    },
+    {
+      path: "/guest-check-in",
+      name: "guest-check-in",
+      component: GuestCheckIn,
     },
   ],
 });

@@ -45,6 +45,7 @@ const menuItems = [
   { name: "Albums", path: "/albums", icon: "bi bi-collection-fill" },
   { name: "Revenue", path: "/revenue", icon: "bi bi-graph-up" },
   { name: "Guest Registration", path: "/guest-registration", icon: "bi bi-person-badge" },
+  { name: "Guest Check In", path: "/guest-check-in", icon: "bi bi-qr-code-scan" },
   { name: "Settings", path: "/settings", icon: "bi bi-gear-fill" },
 ];
 </script>

@@ -1,11 +1,14 @@
 <?php
 require_once __DIR__ . '/../models/Guest.php';
+require_once __DIR__ . '/../models/GuestCheckin.php';
 
 class GuestController {
     private $guestModel;
+    private $guestCheckinModel;
     
     public function __construct() {
         $this->guestModel = new Guest();
+        $this->guestCheckinModel = new GuestCheckin();
     }
     
     public function register($request) {
@@ -83,6 +86,56 @@ class GuestController {
             'registration_date' => $this->guestModel->registration_date,
             'created_at' => $this->guestModel->created_at
         ]);
+    }
+
+    public function checkInGuest($request) {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $qrCode = trim($data['qr_code'] ?? '');
+        $scanSource = trim($data['scan_source'] ?? 'camera');
+
+        if ($qrCode === '') {
+            return $this->sendError('QR code is required', 400);
+        }
+
+        if (!$this->guestModel->findByQrCode($qrCode)) {
+            return $this->sendError('Guest not found for this QR code', 404);
+        }
+
+        $existingCheckin = $this->guestCheckinModel->findByGuestId($this->guestModel->id);
+        if ($existingCheckin) {
+            return $this->sendError(
+                "Guest already checked in at {$existingCheckin['checked_in_at']}",
+                409
+            );
+        }
+
+        $checkedInAt = date('Y-m-d H:i:s');
+
+        if (!$this->guestCheckinModel->create($this->guestModel->id, $qrCode, $checkedInAt, $scanSource)) {
+            return $this->sendError('Failed to save check-in', 500);
+        }
+
+        return $this->sendSuccess([
+            'guest' => [
+                'id' => $this->guestModel->id,
+                'name' => $this->guestModel->name,
+                'company' => $this->guestModel->company,
+                'position' => $this->guestModel->position,
+                'notes' => $this->guestModel->notes,
+                'qr_code' => $this->guestModel->qr_code
+            ],
+            'check_in' => [
+                'checked_in_at' => $checkedInAt,
+                'scan_source' => $scanSource
+            ]
+        ], 'Guest checked in successfully', 201);
+    }
+
+    public function getRecentCheckIns($request) {
+        $limit = $_GET['limit'] ?? 20;
+        $checkins = $this->guestCheckinModel->getRecent((int) $limit);
+
+        return $this->sendSuccess($checkins);
     }
     
     public function getAllGuests($request) {

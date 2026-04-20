@@ -198,7 +198,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/userStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
@@ -213,8 +212,6 @@ interface Guest {
   qr_code: string;
   registration_date: string;
 }
-
-const router = useRouter();
 
 const form = ref({
   name: "",
