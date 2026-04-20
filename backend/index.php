@@ -1,4 +1,7 @@
 <?php
+// Load Composer autoloader
+require_once __DIR__ . '/vendor/autoload.php';
+
 // Load environment variables from .env file
 $envFile = __DIR__ . '/.env';
 if (file_exists($envFile)) {

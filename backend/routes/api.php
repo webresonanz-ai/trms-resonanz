@@ -112,6 +112,7 @@ $router->addRoute('DELETE', '/api/streams/{id}', ['StreamController', 'deleteStr
 $router->addRoute('POST', '/api/guests', ['GuestController', 'register']);
 $router->addRoute('GET', '/api/guests', ['GuestController', 'getAllGuests']);
 $router->addRoute('GET', '/api/guests/stats', ['GuestController', 'getGuestStats']);
+$router->addRoute('GET', '/api/guests/{id}/invitation', ['GuestController', 'generateInvitation']);
 $router->addRoute('GET', '/api/guests/{id}', ['GuestController', 'getGuest']);
 $router->addRoute('GET', '/api/guests/qr/{qrCode}', ['GuestController', 'getGuestByQrCode']);
 $router->addRoute('PUT', '/api/guests/{id}', ['GuestController', 'updateGuest']);

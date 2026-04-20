@@ -1,0 +1,17 @@
+{
+    "name": "music-foundation/backend",
+    "description": "Music Foundation Dashboard Backend",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "tecnickcom/tcpdf": "^6.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "": ""
+        }
+    },
+    "scripts": {
+        "serve": "php -S localhost:8000 index.php"
+    }
+}

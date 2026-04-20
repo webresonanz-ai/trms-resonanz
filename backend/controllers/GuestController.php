@@ -122,17 +122,91 @@ class GuestController {
         if (!$this->guestModel->findById($id)) {
             return $this->sendError('Guest not found', 404);
         }
-        
+
         if ($this->guestModel->delete($id)) {
             return $this->sendSuccess([], 'Guest deleted successfully');
         }
-        
+
         return $this->sendError('Delete failed', 500);
     }
-    
+
+    public function generateInvitation($request, $id) {
+        // Find guest
+        if (!$this->guestModel->findById($id)) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Guest not found']);
+            return;
+        }
+
+        $name = $this->guestModel->name;
+        $company = $this->guestModel->company ?? '';
+        $position = $this->guestModel->position ?? '';
+        $qrCode = $this->guestModel->qr_code;
+
+        // Template path
+        $templatePath = realpath(__DIR__ . '/../templates/images/undangan.png');
+        if (!$templatePath || !file_exists($templatePath)) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => 'Invitation template not found']);
+            return;
+        }
+
+        // A4 dimensions in mm
+        $pageWidth = 210;
+        $pageHeight = 297;
+
+        // Create new PDF
+        $pdf = new \TCPDF('P', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf->SetPrintHeader(false);
+        $pdf->SetPrintFooter(false);
+        $pdf->SetMargins(0, 0, 0, true);
+        $pdf->SetAutoPageBreak(false, 0);
+        $pdf->AddPage();
+
+        // Place background template image (full page)
+        $pdf->Image($templatePath, 0, 0, $pageWidth, $pageHeight, '', '', '', false, 300, '', false, false, 0);
+
+        // Set text color (black)
+        $pdf->SetTextColor(0, 0, 0);
+
+        // Name (larger, bold)
+        $pdf->SetFont('dejavusans', 'B', 34);
+        $nameY = $pageHeight * 0.16; // adjust this multiplier based on template design
+        $pdf->SetXY(0, $nameY);
+        $pdf->Cell($pageWidth, 12, $name, 0, 1, 'C');
+
+        // Company (medium)
+        if (!empty($company)) {
+            $pdf->SetFont('dejavusans', '', 24);
+            $companyY = $pageHeight * 0.24;
+            $pdf->SetXY(0, $companyY);
+            $pdf->Cell($pageWidth, 10, $company, 0, 1, 'C');
+        }
+
+        // Position (medium)
+        if (!empty($position)) {
+            $pdf->SetFont('dejavusans', '', 24);
+            $positionY = $pageHeight * 0.28;
+            $pdf->SetXY(0, $positionY);
+            $pdf->Cell($pageWidth, 10, $position, 0, 1, 'C');
+        }
+
+        // QR Code
+        $qrSize = 62; // mm
+        $qrX = ($pageWidth - $qrSize) / 2; // center horizontally
+        $qrY = $pageHeight * 0.415; // adjust as needed
+        $pdf->write2DBarcode($qrCode, 'QRCODE,H', $qrX, $qrY, $qrSize, $qrSize, ['border' => true, 'vborder' => 2, 'hborder' => 2], 'N');
+
+        // Output PDF as download
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $name);
+        $filename = "invitation_{$id}_{$safeName}.pdf";
+        $pdf->Output($filename, 'D');
+        exit;
+    }
+
     public function getGuestStats($request) {
         $totalGuests = $this->guestModel->countAll();
-        
+
         return $this->sendSuccess([
             'total_guests' => $totalGuests
         ]);
