@@ -101,3 +101,18 @@ INSERT INTO streams (track_name, artist, stream_date, stream_count, revenue) VAL
 ('Blinding Lights', 'The Weeknd', '2024-01-15', 1250000, 12500),
 ('Anti-Hero', 'Taylor Swift', '2024-01-15', 980000, 9800),
 ('Rich Flex', 'Drake', '2024-01-14', 876000, 8760);
+
+-- Guests table
+CREATE TABLE IF NOT EXISTS guests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    company VARCHAR(200),
+    position VARCHAR(200),
+    notes TEXT,
+    qr_code VARCHAR(100) UNIQUE NOT NULL,
+    registration_date DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_name (name),
+    INDEX idx_company (company),
+    INDEX idx_qr_code (qr_code)
+);

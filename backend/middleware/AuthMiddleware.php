@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../config/database.php';
 
 class AuthMiddleware implements MiddlewareInterface {
-    private $excludedRoutes = ['/api/login', '/api/register', '/api/artists', '/api/albums', '/api/streams', '/api/dashboard/stats'];
+    private $excludedRoutes = ['/api/login', '/api/register', '/api/artists', '/api/albums', '/api/streams', '/api/dashboard/stats', '/api/guests'];
     
     public function handle($request, $next) {
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);

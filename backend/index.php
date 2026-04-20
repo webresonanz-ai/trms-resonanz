@@ -47,6 +47,7 @@ require_once __DIR__ . '/controllers/ProductController.php';
 require_once __DIR__ . '/controllers/ArtistController.php';
 require_once __DIR__ . '/controllers/AlbumController.php';
 require_once __DIR__ . '/controllers/StreamController.php';
+require_once __DIR__ . '/controllers/GuestController.php';
 
 // Dispatch router
 $router = require __DIR__ . '/routes/api.php';
