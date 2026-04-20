@@ -5,11 +5,13 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 
 export const useUserStore = defineStore("user", () => {
   const user = ref<{
+    id: number;
     name: string;
     email: string;
     avatar: string;
     role: string;
   }>({
+    id: 0,
     name: "Sarah Johnson",
     email: "sarah@musicfoundation.com",
     avatar: "",
@@ -19,20 +21,59 @@ export const useUserStore = defineStore("user", () => {
   const isLoggedIn = ref(false);
   const loading = ref(false);
   const error = ref<string | null>(null);
+   const token = ref<string | null>(localStorage.getItem("token"));
+
+  // Initialize: check token validity on app load
+  async function initAuth() {
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      token.value = storedToken;
+      try {
+        const response = await fetch(`${API_BASE}/profile`, {
+          headers: getAuthHeaders(),
+        });
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            user.value = {
+              id: result.data.id,
+              name: result.data.name,
+              email: result.data.email,
+              avatar: result.data.avatar || "",
+              role: result.data.role || "user",
+            };
+            isLoggedIn.value = true;
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Auth init failed:", e);
+      }
+      // Token invalid — clear it
+      token.value = null;
+      localStorage.removeItem("token");
+      isLoggedIn.value = false;
+    }
+  }
 
   async function fetchProfile() {
     loading.value = true;
     error.value = null;
     try {
-      const response = await fetch(`${API_BASE}/profile`);
+      const response = await fetch(`${API_BASE}/profile`, {
+        headers: getAuthHeaders(),
+      });
       if (response.status === 401) {
         isLoggedIn.value = false;
+        token.value = null;
+        localStorage.removeItem("token");
         loading.value = false;
         return;
       }
       const result = await response.json();
       if (result.success && result.data) {
         user.value = {
+          id: result.data.id,
           name: result.data.name,
           email: result.data.email,
           avatar: result.data.avatar || "",
@@ -57,7 +98,9 @@ export const useUserStore = defineStore("user", () => {
         body: JSON.stringify({ email, password }),
       });
       const result = await response.json();
-      if (result.success) {
+      if (result.success && result.data?.token) {
+        token.value = result.data.token;
+        localStorage.setItem("token", result.data.token);
         await fetchProfile();
         return true;
       }
@@ -82,6 +125,11 @@ export const useUserStore = defineStore("user", () => {
       });
       const result = await response.json();
       if (result.success) {
+        if (result.data?.token) {
+          token.value = result.data.token;
+          localStorage.setItem("token", result.data.token);
+          await fetchProfile();
+        }
         return true;
       }
       error.value = result.error || "Registration failed";
@@ -96,12 +144,26 @@ export const useUserStore = defineStore("user", () => {
 
   function logout() {
     user.value = {
-      name: "Sarah Johnson",
-      email: "sarah@musicfoundation.com",
+      id: 0,
+      name: "",
+      email: "",
       avatar: "",
-      role: "Admin",
+      role: "user",
     };
     isLoggedIn.value = false;
+    token.value = null;
+    localStorage.removeItem("token");
+  }
+
+  function getAuthHeaders(): HeadersInit {
+    return token.value
+      ? {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token.value}`,
+        }
+      : {
+          "Content-Type": "application/json",
+        };
   }
 
   return {
@@ -109,9 +171,12 @@ export const useUserStore = defineStore("user", () => {
     isLoggedIn,
     loading,
     error,
+    token,
+    initAuth,
     fetchProfile,
     login,
     register,
     logout,
+    getAuthHeaders,
   };
 });

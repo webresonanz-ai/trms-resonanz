@@ -199,8 +199,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/userStore";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
+const userStore = useUserStore();
 
 interface Guest {
   id: number;
@@ -233,7 +235,9 @@ onMounted(() => {
 
 async function fetchGuests() {
   try {
-    const response = await fetch(`${API_BASE}/guests`);
+    const response = await fetch(`${API_BASE}/guests`, {
+      headers: userStore.getAuthHeaders(),
+    });
     const result = await response.json();
     if (result.success) {
       guests.value = result.data;
@@ -250,7 +254,7 @@ async function handleRegister() {
   try {
     const response = await fetch(`${API_BASE}/guests`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: userStore.getAuthHeaders(),
       body: JSON.stringify(form.value),
     });
     const result = await response.json();
@@ -309,6 +313,7 @@ async function deleteGuest(id: number) {
   try {
     const response = await fetch(`${API_BASE}/guests/${id}`, {
       method: "DELETE",
+      headers: userStore.getAuthHeaders(),
     });
     const result = await response.json();
     if (result.success) {
