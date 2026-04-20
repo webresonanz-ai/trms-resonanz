@@ -47,8 +47,13 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { useMusicStore } from "@/stores/musicStore";
 
 const musicStore = useMusicStore();
+
+onMounted(() => {
+  musicStore.fetchArtists();
+});
 </script>
 

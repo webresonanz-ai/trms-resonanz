@@ -38,9 +38,14 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from "vue";
 import { useMusicStore } from "@/stores/musicStore";
 
 const musicStore = useMusicStore();
+
+onMounted(() => {
+  musicStore.fetchAlbums();
+});
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString("en-US", {

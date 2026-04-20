@@ -1,109 +1,16 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import type { Artist, Album, Stream, DashboardStats } from "@/types";
-import artistTheWeeknd from "@/assets/images/artist-the-weeknd.svg";
-import artistTaylorSwift from "@/assets/images/artist-taylor-swift.svg";
-import artistDrake from "@/assets/images/artist-drake.svg";
-import albumAfterHours from "@/assets/images/album-after-hours.svg";
-import albumMidnights from "@/assets/images/album-midnights.svg";
-import albumCertifiedLoverBoy from "@/assets/images/album-certified-lover-boy.svg";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export const useMusicStore = defineStore("music", () => {
-  // State
-  const artists = ref<Artist[]>([
-    {
-      id: 1,
-      name: "The Weeknd",
-      image: artistTheWeeknd,
-      monthlyListeners: 85000000,
-      totalStreams: 150000000,
-      albums: 6,
-      genre: "R&B/Pop",
-      revenue: 12500000,
-    },
-    {
-      id: 2,
-      name: "Taylor Swift",
-      image: artistTaylorSwift,
-      monthlyListeners: 92000000,
-      totalStreams: 200000000,
-      albums: 10,
-      genre: "Pop",
-      revenue: 18500000,
-    },
-    {
-      id: 3,
-      name: "Drake",
-      image: artistDrake,
-      monthlyListeners: 78000000,
-      totalStreams: 175000000,
-      albums: 8,
-      genre: "Hip-Hop",
-      revenue: 15200000,
-    },
-  ]);
+  const artists = ref<Artist[]>([]);
+  const albums = ref<Album[]>([]);
+  const recentStreams = ref<Stream[]>([]);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
 
-  const albums = ref<Album[]>([
-    {
-      id: 1,
-      title: "After Hours",
-      artist: "The Weeknd",
-      artistId: 1,
-      cover: albumAfterHours,
-      releaseDate: "2020-03-20",
-      streams: 45000000,
-      revenue: 4500000,
-    },
-    {
-      id: 2,
-      title: "Midnights",
-      artist: "Taylor Swift",
-      artistId: 2,
-      cover: albumMidnights,
-      releaseDate: "2022-10-21",
-      streams: 68000000,
-      revenue: 6800000,
-    },
-    {
-      id: 3,
-      title: "Certified Lover Boy",
-      artist: "Drake",
-      artistId: 3,
-      cover: albumCertifiedLoverBoy,
-      releaseDate: "2021-09-03",
-      streams: 52000000,
-      revenue: 5200000,
-    },
-  ]);
-
-  const recentStreams = ref<Stream[]>([
-    {
-      id: 1,
-      trackName: "Blinding Lights",
-      artist: "The Weeknd",
-      date: "2024-01-15",
-      count: 1250000,
-      revenue: 12500,
-    },
-    {
-      id: 2,
-      trackName: "Anti-Hero",
-      artist: "Taylor Swift",
-      date: "2024-01-15",
-      count: 980000,
-      revenue: 9800,
-    },
-    {
-      id: 3,
-      trackName: "Rich Flex",
-      artist: "Drake",
-      date: "2024-01-14",
-      count: 876000,
-      revenue: 8760,
-    },
-  ]);
-
-  // Getters
   const dashboardStats = computed<DashboardStats>(() => ({
     totalStreams: artists.value.reduce((sum, artist) => sum + artist.totalStreams, 0),
     totalRevenue: artists.value.reduce((sum, artist) => sum + artist.revenue, 0),
@@ -112,9 +19,115 @@ export const useMusicStore = defineStore("music", () => {
     growth: 23.5,
   }));
 
-  // Actions
-  function addArtist(artist: Artist) {
-    artists.value.push(artist);
+  async function fetchArtists() {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${API_BASE}/artists`);
+      const result = await response.json();
+      if (result.success) {
+        artists.value = result.data.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          image: a.image || "",
+          monthlyListeners: parseInt(a.monthly_listeners) || 0,
+          totalStreams: parseInt(a.total_streams) || 0,
+          albums: parseInt(a.albums_count) || 0,
+          genre: a.genre || "",
+          revenue: parseFloat(a.revenue) || 0,
+        }));
+      }
+    } catch (e) {
+      error.value = "Failed to fetch artists";
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchAlbums() {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${API_BASE}/albums`);
+      const result = await response.json();
+      if (result.success) {
+        albums.value = result.data.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          artist: a.artist,
+          artistId: a.artist_id,
+          cover: a.cover || "",
+          releaseDate: a.release_date || "",
+          streams: parseInt(a.streams) || 0,
+          revenue: parseFloat(a.revenue) || 0,
+        }));
+      }
+    } catch (e) {
+      error.value = "Failed to fetch albums";
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchRecentStreams() {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${API_BASE}/streams/recent?limit=10`);
+      const result = await response.json();
+      if (result.success) {
+        recentStreams.value = result.data.map((s: any) => ({
+          id: s.id,
+          trackName: s.track_name,
+          artist: s.artist,
+          date: s.stream_date,
+          count: parseInt(s.stream_count) || 0,
+          revenue: parseFloat(s.revenue) || 0,
+        }));
+      }
+    } catch (e) {
+      error.value = "Failed to fetch streams";
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  async function fetchDashboardStats() {
+    try {
+      const response = await fetch(`${API_BASE}/dashboard/stats`);
+      const result = await response.json();
+      return result.success ? result.data : null;
+    } catch (e) {
+      error.value = "Failed to fetch dashboard stats";
+      return null;
+    }
+  }
+
+  async function fetchAll() {
+    await Promise.all([fetchArtists(), fetchAlbums(), fetchRecentStreams()]);
+  }
+
+  async function addArtist(artist: Artist) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await fetch(`${API_BASE}/artists`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(artist),
+      });
+      const result = await response.json();
+      if (result.success) {
+        artists.value.push(artist);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      error.value = "Failed to add artist";
+      return false;
+    } finally {
+      loading.value = false;
+    }
   }
 
   function getArtistById(id: number) {
@@ -129,7 +142,14 @@ export const useMusicStore = defineStore("music", () => {
     artists,
     albums,
     recentStreams,
+    loading,
+    error,
     dashboardStats,
+    fetchArtists,
+    fetchAlbums,
+    fetchRecentStreams,
+    fetchDashboardStats,
+    fetchAll,
     addArtist,
     getArtistById,
     getAlbumsByArtist,

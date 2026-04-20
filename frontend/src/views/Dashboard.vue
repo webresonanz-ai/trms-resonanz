@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import { useMusicStore } from "@/stores/musicStore";
 import DashboardCard from "@/components/DashboardCard.vue";
 import RevenueChart from "@/components/Charts/RevenueChart.vue";
@@ -73,6 +73,10 @@ import StreamChart from "@/components/Charts/StreamChart.vue";
 import MusicPlayer from "@/components/MusicPlayer.vue";
 
 const musicStore = useMusicStore();
+
+onMounted(() => {
+  musicStore.fetchAll();
+});
 
 const stats = computed(() => [
   {

@@ -85,5 +85,28 @@ $router->addRoute('GET', '/api/products/{id}', ['ProductController', 'getProduct
 $router->addRoute('PUT', '/api/products/{id}', ['ProductController', 'updateProduct']);
 $router->addRoute('DELETE', '/api/products/{id}', ['ProductController', 'deleteProduct']);
 
+// Artist routes
+$router->addRoute('POST', '/api/artists', ['ArtistController', 'create']);
+$router->addRoute('GET', '/api/artists', ['ArtistController', 'getAllArtists']);
+$router->addRoute('GET', '/api/artists/{id}', ['ArtistController', 'getArtist']);
+$router->addRoute('PUT', '/api/artists/{id}', ['ArtistController', 'updateArtist']);
+$router->addRoute('DELETE', '/api/artists/{id}', ['ArtistController', 'deleteArtist']);
+$router->addRoute('GET', '/api/dashboard/stats', ['ArtistController', 'getDashboardStats']);
+
+// Album routes
+$router->addRoute('POST', '/api/albums', ['AlbumController', 'create']);
+$router->addRoute('GET', '/api/albums', ['AlbumController', 'getAllAlbums']);
+$router->addRoute('GET', '/api/albums/{id}', ['AlbumController', 'getAlbum']);
+$router->addRoute('PUT', '/api/albums/{id}', ['AlbumController', 'updateAlbum']);
+$router->addRoute('DELETE', '/api/albums/{id}', ['AlbumController', 'deleteAlbum']);
+$router->addRoute('GET', '/api/artists/{artistId}/albums', ['AlbumController', 'getAlbumsByArtist']);
+
+// Stream routes
+$router->addRoute('POST', '/api/streams', ['StreamController', 'create']);
+$router->addRoute('GET', '/api/streams', ['StreamController', 'getAllStreams']);
+$router->addRoute('GET', '/api/streams/recent', ['StreamController', 'getRecentStreams']);
+$router->addRoute('GET', '/api/streams/{id}', ['StreamController', 'getStream']);
+$router->addRoute('DELETE', '/api/streams/{id}', ['StreamController', 'deleteStream']);
+
 return $router;
 ?>

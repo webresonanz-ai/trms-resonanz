@@ -4,6 +4,8 @@ import Artists from "../views/Artists.vue";
 import Albums from "../views/Albums.vue";
 import Revenue from "../views/Revenue.vue";
 import Settings from "../views/Settings.vue";
+import Login from "../views/Login.vue";
+import Register from "../views/Register.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +34,16 @@ const router = createRouter({
       path: "/settings",
       name: "settings",
       component: Settings,
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: Login,
+    },
+    {
+      path: "/register",
+      name: "register",
+      component: Register,
     },
   ],
 });

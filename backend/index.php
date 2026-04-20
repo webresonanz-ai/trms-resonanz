@@ -44,6 +44,9 @@ require_once __DIR__ . '/middleware/RateLimitMiddleware.php';
 require_once __DIR__ . '/middleware/LoggerMiddleware.php';
 require_once __DIR__ . '/controllers/UserController.php';
 require_once __DIR__ . '/controllers/ProductController.php';
+require_once __DIR__ . '/controllers/ArtistController.php';
+require_once __DIR__ . '/controllers/AlbumController.php';
+require_once __DIR__ . '/controllers/StreamController.php';
 
 // Dispatch router
 $router = require __DIR__ . '/routes/api.php';

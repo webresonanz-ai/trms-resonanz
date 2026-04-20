@@ -2,7 +2,7 @@
   <nav class="navbar glass px-4 py-3">
     <div class="navbar-shell">
       <div class="navbar-branding">
-        <button class="btn btn-link text-dark nav-icon-button" @click="$emit('toggle-sidebar')">
+        <button class="btn btn-link text-dark nav-icon-button mobile-menu-btn" @click="$emit('toggle-sidebar')">
         <i class="bi bi-list fs-4"></i>
       </button>
         <div class="navbar-copy">
@@ -27,8 +27,8 @@
             data-bs-toggle="dropdown"
             aria-expanded="false"
           >
-            <img
-              :src="userStore.user.avatar"
+<img
+              :src="userStore.user.avatar || defaultAvatar"
               class="rounded-circle avatar-image media-frame"
               width="48"
               height="48"
@@ -43,7 +43,7 @@
             <li><a class="dropdown-item" href="#">Profile</a></li>
             <li><a class="dropdown-item" href="#">Account Settings</a></li>
             <li><hr class="dropdown-divider" /></li>
-            <li><a class="dropdown-item text-danger" href="#">Logout</a></li>
+            <li><a class="dropdown-item text-danger" @click="handleLogout" href="#">Logout</a></li>
           </ul>
         </div>
       </div>
@@ -52,7 +52,9 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from "vue-router";
 import { useUserStore } from "@/stores/userStore";
+import userAvatar from "@/assets/images/user-avatar.svg";
 
 defineProps<{
   isSidebarOpen: boolean;
@@ -62,7 +64,14 @@ defineEmits<{
   (event: "toggle-sidebar"): void;
 }>();
 
+const router = useRouter();
 const userStore = useUserStore();
+const defaultAvatar = userAvatar;
+
+function handleLogout() {
+  userStore.logout();
+  router.push("/login");
+}
 </script>
 
 <style scoped>
@@ -168,6 +177,16 @@ const userStore = useUserStore();
 
   .profile-trigger {
     padding: 0;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none;
   }
 }
 

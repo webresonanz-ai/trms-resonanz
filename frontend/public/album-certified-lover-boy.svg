@@ -1,0 +1,14 @@
+<svg width="480" height="320" viewBox="0 0 480 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cover" x1="20" y1="18" x2="430" y2="302" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8E4"/>
+      <stop offset="1" stop-color="#D9B152"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="320" rx="32" fill="url(#cover)"/>
+  <rect x="48" y="44" width="384" height="232" rx="28" fill="#FFFCF4" fill-opacity="0.7"/>
+  <text x="72" y="122" fill="#8B6A19" font-family="Arial, sans-serif" font-size="20" letter-spacing="5">DRAKE</text>
+  <text x="72" y="176" fill="#72500F" font-family="Georgia, serif" font-size="42" font-weight="700">Certified</text>
+  <text x="72" y="218" fill="#72500F" font-family="Georgia, serif" font-size="42" font-weight="700">Lover Boy</text>
+  <circle cx="368" cy="160" r="52" fill="#F5DE9F"/>
+</svg>

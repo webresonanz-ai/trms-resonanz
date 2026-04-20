@@ -1,0 +1,13 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="30" y1="26" x2="208" y2="214" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFDF7"/>
+      <stop offset="1" stop-color="#DDBB68"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" rx="120" fill="url(#bg)"/>
+  <circle cx="120" cy="90" r="41" fill="#FFF8E5"/>
+  <path d="M54 194C63 155 88 136 120 136C152 136 177 155 186 194" fill="#F4DFAB"/>
+  <path d="M95 102C105 109 135 109 145 102" stroke="#9B741A" stroke-width="8" stroke-linecap="round"/>
+  <text x="120" y="216" text-anchor="middle" fill="#8B6A19" font-family="Georgia, serif" font-size="28" font-weight="700">DR</text>
+</svg>
