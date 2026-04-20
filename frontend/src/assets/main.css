@@ -310,9 +310,22 @@ h6 {
 @media (max-width: 768px) {
   :root {
     --content-padding: 20px;
+    --navbar-height: 96px;
   }
 
   .page-shell {
     margin-left: 0;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 560px) {
+  :root {
+    --content-padding: 16px;
+    --navbar-height: 104px;
   }
 }
