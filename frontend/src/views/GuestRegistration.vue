@@ -13,48 +13,28 @@
         <div class="card">
           <div class="card-body p-4">
             <h5 class="card-title fw-semibold mb-4">Guest Details</h5>
-            
+
             <form @submit.prevent="handleRegister" v-if="!registeredGuest">
               <div class="mb-3">
                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  class="form-control"
-                  placeholder="Enter guest name"
-                  required
-                />
+                <input v-model="form.name" type="text" class="form-control" placeholder="Enter guest name" required />
               </div>
 
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Company</label>
-                  <input
-                    v-model="form.company"
-                    type="text"
-                    class="form-control"
-                    placeholder="Company name"
-                  />
+                  <input v-model="form.company" type="text" class="form-control" placeholder="Company name" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Position</label>
-                  <input
-                    v-model="form.position"
-                    type="text"
-                    class="form-control"
-                    placeholder="Job position"
-                  />
+                  <input v-model="form.position" type="text" class="form-control" placeholder="Job position" />
                 </div>
               </div>
 
               <div class="mb-4">
                 <label class="form-label">Notes</label>
-                <textarea
-                  v-model="form.notes"
-                  class="form-control"
-                  rows="3"
-                  placeholder="Additional notes..."
-                ></textarea>
+                <textarea v-model="form.notes" class="form-control" rows="3"
+                  placeholder="Additional notes..."></textarea>
               </div>
 
               <div v-if="error" class="alert alert-danger">{{ error }}</div>
@@ -72,7 +52,7 @@
               </div>
               <h4 class="fw-semibold text-success mb-2">Guest Registered Successfully!</h4>
               <p class="text-muted mb-4">The guest has been registered and QR code generated.</p>
-              
+
               <button @click="resetForm" class="btn btn-outline-secondary">
                 Register Another Guest
               </button>
@@ -86,7 +66,7 @@
         <div class="card h-100">
           <div class="card-body p-4 d-flex flex-column">
             <h5 class="card-title fw-semibold mb-4">QR Code</h5>
-            
+
             <div v-if="registeredGuest" class="text-center flex-grow-1">
               <div class="qr-display mb-4">
                 <div class="qr-code">
@@ -95,7 +75,7 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="guest-info text-start mb-4">
                 <div class="info-item">
                   <span class="info-label">Guest Name</span>
@@ -114,12 +94,7 @@
               <div class="qr-code-text">
                 <label class="form-label">QR Code</label>
                 <div class="input-group">
-                  <input
-                    type="text"
-                    class="form-control text-center"
-                    :value="registeredGuest.qr_code"
-                    readonly
-                  />
+                  <input type="text" class="form-control text-center" :value="registeredGuest.qr_code" readonly />
                   <button class="btn btn-outline-secondary" @click="copyQrCode" type="button">
                     <i :class="copied ? 'bi bi-check' : 'bi bi-clipboard'"></i>
                   </button>
@@ -145,7 +120,7 @@
           <h5 class="card-title fw-semibold mb-0">Registered Guests</h5>
           <span class="text-muted">{{ guests.length }} guests</span>
         </div>
-        
+
         <div class="table-responsive">
           <table class="table table-hover" v-if="guests.length > 0">
             <thead>
@@ -168,18 +143,10 @@
                 </td>
                 <td>{{ formatDate(guest.registration_date) }}</td>
                 <td>
-                  <button 
-                    class="btn btn-sm btn-outline-secondary me-1" 
-                    @click="viewGuest(guest)"
-                    title="View"
-                  >
+                  <button class="btn btn-sm btn-outline-secondary me-1" @click="viewGuest(guest)" title="View">
                     <i class="bi bi-eye"></i>
                   </button>
-                  <button 
-                    class="btn btn-sm btn-outline-danger" 
-                    @click="deleteGuest(guest.id)"
-                    title="Delete"
-                  >
+                  <button class="btn btn-sm btn-outline-danger" @click="deleteGuest(guest.id)" title="Delete">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
@@ -218,6 +185,7 @@ const form = ref({
   company: "",
   position: "",
   notes: "",
+  registration_date: "",
 });
 
 const loading = ref(false);
@@ -248,6 +216,17 @@ async function handleRegister() {
   error.value = "";
   loading.value = true;
 
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  form.value.registration_date = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
   try {
     const response = await fetch(`${API_BASE}/guests`, {
       method: "POST",
@@ -255,7 +234,7 @@ async function handleRegister() {
       body: JSON.stringify(form.value),
     });
     const result = await response.json();
-    
+
     if (result.success) {
       registeredGuest.value = result.data.guest;
       fetchGuests();
@@ -275,6 +254,7 @@ function resetForm() {
     company: "",
     position: "",
     notes: "",
+    registration_date: "",
   };
   registeredGuest.value = null;
 }
@@ -306,7 +286,7 @@ function viewGuest(guest: Guest) {
 
 async function deleteGuest(id: number) {
   if (!confirm("Are you sure you want to delete this guest?")) return;
-  
+
   try {
     const response = await fetch(`${API_BASE}/guests/${id}`, {
       method: "DELETE",

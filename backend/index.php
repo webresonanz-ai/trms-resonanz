@@ -36,7 +36,7 @@ if (($_ENV['ENVIRONMENT'] ?? 'production') === 'development') {
 }
 
 // Set timezone
-date_default_timezone_set('UTC');
+date_default_timezone_set('Asia/Jakarta');
 
 // Load required files
 require_once __DIR__ . '/config/database.php';

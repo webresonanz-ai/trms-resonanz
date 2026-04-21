@@ -41,14 +41,13 @@
             </div>
 
             <div class="scanner-panel mb-4">
-              <video
-                ref="videoRef"
-                class="scanner-video"
-                autoplay
-                muted
-                playsinline
+              <div
+                id="qr-reader"
+                class="qr-reader-container"
                 :class="{ 'is-hidden': !scannerActive }"
-              ></video>
+              ></div>
+
+              <div v-if="errorMessage" class="alert alert-danger m-3">{{ errorMessage }}</div>
 
               <div v-if="!scannerActive" class="scanner-empty">
                 <div class="scanner-empty-icon">
@@ -177,15 +176,10 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useUserStore } from "@/stores/userStore";
+import { Html5Qrcode } from "html5-qrcode";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000/api";
 const userStore = useUserStore();
-
-type BarcodeDetectorCtor = new (options?: { formats?: string[] }) => {
-  detect: (
-    source: CanvasImageSource | ImageBitmapSource,
-  ) => Promise<Array<{ rawValue?: string }>>;
-};
 
 interface CheckInResponse {
   guest: {
@@ -213,25 +207,22 @@ interface RecentCheckIn {
   scan_source: string;
 }
 
-const videoRef = ref<HTMLVideoElement | null>(null);
-const stream = ref<MediaStream | null>(null);
+const html5QrCode = ref<Html5Qrcode | null>(null);
 const scannerActive = ref(false);
 const startingCamera = ref(false);
+const errorMessage = ref("");
 const submitting = ref(false);
 const message = ref("");
 const messageType = ref<"success" | "danger" | "warning">("success");
 const manualCode = ref("");
 const lastCheckIn = ref<CheckInResponse | null>(null);
 const recentCheckIns = ref<RecentCheckIn[]>([]);
-const scanLoopId = ref<number | null>(null);
 const lastProcessedCode = ref("");
 
-const BarcodeDetectorApi = window.BarcodeDetector as BarcodeDetectorCtor | undefined;
 const cameraSupported =
   typeof navigator !== "undefined" &&
   "mediaDevices" in navigator &&
-  typeof navigator.mediaDevices?.getUserMedia === "function" &&
-  typeof BarcodeDetectorApi !== "undefined";
+  typeof navigator.mediaDevices?.getUserMedia === "function";
 
 const cameraSupportMessage = computed(() =>
   cameraSupported
@@ -264,83 +255,64 @@ async function fetchRecentCheckIns() {
 }
 
 async function startScanner() {
-  if (!cameraSupported || !videoRef.value) {
+  if (!cameraSupported) {
     showMessage("Live camera scanning is not supported in this browser.", "warning");
     return;
   }
 
-  stopScanner();
-  startingCamera.value = true;
-
   try {
-    stream.value = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: "environment" },
-      },
-      audio: false,
-    });
-
-    videoRef.value.srcObject = stream.value;
-    await videoRef.value.play();
+    errorMessage.value = "";
     scannerActive.value = true;
-    message.value = "";
-    scanFrame();
+    startingCamera.value = true;
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    html5QrCode.value = new Html5Qrcode("qr-reader");
+
+    const config = {
+      fps: 10,
+      qrbox: { width: 250, height: 250 },
+      aspectRatio: 1.0,
+    };
+
+    await html5QrCode.value.start(
+      { facingMode: "user" },
+      config,
+      onScanSuccess,
+      onScanFailure,
+    );
   } catch (error) {
-    console.error("Failed to start scanner:", error);
-    showMessage("Camera access failed. Please allow camera permission or use manual input.", "warning");
+    console.error("Error starting scanner:", error);
+    errorMessage.value = "Unable to access camera. Please check permissions or enter code manually.";
+    showMessage(errorMessage.value, "warning");
+    scannerActive.value = false;
   } finally {
     startingCamera.value = false;
   }
 }
 
-function stopScanner() {
-  if (scanLoopId.value !== null) {
-    window.cancelAnimationFrame(scanLoopId.value);
-    scanLoopId.value = null;
+function onScanSuccess(decodedText: string) {
+  if (decodedText && decodedText !== lastProcessedCode.value && !submitting.value) {
+    lastProcessedCode.value = decodedText;
+    manualCode.value = decodedText;
+    submitCheckIn(decodedText, "camera");
   }
+}
 
-  stream.value?.getTracks().forEach((track) => track.stop());
-  stream.value = null;
+function onScanFailure(_error: string) {}
 
-  if (videoRef.value) {
-    videoRef.value.pause();
-    videoRef.value.srcObject = null;
+async function stopScanner() {
+  if (html5QrCode.value) {
+    try {
+      await html5QrCode.value.stop();
+      html5QrCode.value.clear();
+    } catch (error) {
+      console.error("Error stopping scanner:", error);
+    }
+    html5QrCode.value = null;
   }
 
   scannerActive.value = false;
-}
-
-async function scanFrame() {
-  if (!scannerActive.value || !videoRef.value || !BarcodeDetectorApi) {
-    return;
-  }
-
-  const detector = new BarcodeDetectorApi({ formats: ["qr_code"] });
-
-  const tick = async () => {
-    if (!scannerActive.value || !videoRef.value) {
-      return;
-    }
-
-    try {
-      const barcodes = await detector.detect(videoRef.value);
-      const qrValue = barcodes.find((barcode) => barcode.rawValue?.trim())?.rawValue?.trim();
-
-      if (qrValue && qrValue !== lastProcessedCode.value && !submitting.value) {
-        lastProcessedCode.value = qrValue;
-        manualCode.value = qrValue;
-        await submitCheckIn(qrValue, "camera");
-      }
-    } catch (error) {
-      console.error("QR detection failed:", error);
-    }
-
-    if (scannerActive.value) {
-      scanLoopId.value = window.requestAnimationFrame(tick);
-    }
-  };
-
-  scanLoopId.value = window.requestAnimationFrame(tick);
 }
 
 async function submitManualCode() {
@@ -356,6 +328,17 @@ async function submitManualCode() {
 async function submitCheckIn(qrCode: string, scanSource: "camera" | "manual") {
   submitting.value = true;
 
+  const now = new Date();
+  const jakartaOffset = 7 * 60;
+  const localTime = new Date(now.getTime() + (jakartaOffset + now.getTimezoneOffset()) * 60 * 1000);
+  const year = localTime.getFullYear();
+  const month = String(localTime.getMonth() + 1).padStart(2, "0");
+  const day = String(localTime.getDate()).padStart(2, "0");
+  const hours = String(localTime.getHours()).padStart(2, "0");
+  const minutes = String(localTime.getMinutes()).padStart(2, "0");
+  const seconds = String(localTime.getSeconds()).padStart(2, "0");
+  const checkedInAt = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
   try {
     const response = await fetch(`${API_BASE}/guests/check-in`, {
       method: "POST",
@@ -363,6 +346,7 @@ async function submitCheckIn(qrCode: string, scanSource: "camera" | "manual") {
       body: JSON.stringify({
         qr_code: qrCode,
         scan_source: scanSource,
+        checked_in_at: checkedInAt,
       }),
     });
 
@@ -424,8 +408,29 @@ function formatDate(dateString: string) {
   object-fit: cover;
 }
 
-.scanner-video.is-hidden {
+.qr-reader-container {
+  width: 100%;
+  min-height: 360px;
+  transform: scaleX(-1);
+}
+
+.qr-reader-container video {
+  width: 100% !important;
+  height: 360px !important;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.qr-reader-container.is-hidden {
   display: none;
+}
+
+.qr-reader-container #qr-shaded-region {
+  border-width: 0 !important;
+}
+
+.qr-reader-container button {
+  display: none !important;
 }
 
 .scanner-empty {
